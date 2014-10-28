@@ -5,6 +5,7 @@ init();
 //========================================================================================
 var debug=0;
 
+
 var brain_offcn=document.createElement('canvas');
 var brain_offtx=brain_offcn.getContext('2d');
 var canvas;
@@ -376,6 +377,18 @@ function drawAtlasImage()
 	nearestNeighbour(context);
 	context.drawImage(atlas_offcn,0,0,brain_W,brain_H);
 }
+function drawPaintCursor(x, y, ratio_x, ratio_y) {
+    // Draw the paint cursor
+    ps_x = User.penSize * ratio_x;
+    ps_y = User.penSize * ratio_y;
+    //px = x - ps_x / 2;
+    //py = y - ps_y / 2;
+    px = x;
+    py = y;
+
+    $("#drawingcursor").remove();
+    $("#resizable").append("<div id='drawingcursor' class='drawingcursor' style='left:"+px+"px; top: "+py+"px; width:"+ps_x+"px; height: "+ps_y+"px;'></div>");
+}
 function mousedown(e) {
 	e.preventDefault();
 	var r = e.target.getBoundingClientRect();
@@ -389,7 +402,11 @@ function mousemove(e) {
 	var r = e.target.getBoundingClientRect();
 	var x=parseInt(((e.clientX-r.left) / e.target.clientWidth )*brain_W);
 	var y=parseInt(((e.clientY-r.top) / e.target.clientHeight )*brain_H);
-	
+        var ratio_x = e.target.clientWidth / brain_W;
+        var ratio_y = e.target.clientHeight / brain_H;
+        // Draw the drawing cursor
+        drawPaintCursor(e.clientX-r.left, e.clientY-r.top, ratio_x, ratio_y);
+        
 	move(x,y);
 }
 function mouseup(e) {
@@ -444,7 +461,8 @@ function move(x,y) {
 
 	if(!User.mouseIsDown)
 		return;
-	if(User.tool=='paint')
+
+        if(User.tool=='paint')
 		paintxy(-1,'lf',x,y,User);
 	else
 	if(User.tool=='erase')

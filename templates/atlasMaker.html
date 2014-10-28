@@ -1,3 +1,15 @@
+
+<!--[if IE]>
+    <style type="text/css">
+
+    .drawingcursor {
+        filter:progid:DXImageTransform.Microsoft.AlphaImageLoader(src='img/transparent.png', sizingMethod='scale');
+        background:none !important;
+    }
+
+    </style>
+<![endif]-->
+
 <div id="toolbar" class="ui-widget-content ui-corner-all">
 	
     <!-- Controls -->
@@ -11,14 +23,14 @@
         </div>
 
         <div id="plane">
-            <label>Stereotaxic plane</label><br/>
+            <label class="tb_label">Stereotaxic plane</label><br/>
             <input type="radio" name="radio" id="sagittal" checked="checked"><label for="sagittal">Sagittal</label>
             <input type="radio" name="radio" id="coronal"><label for="coronal">Coronal</label>
             <input type="radio" name="radio" id="axial"><label for="axial">Axial</label>
         </div>
 
         <div id="painttools">
-            <label>Paint tools</label><br/>
+            <label class="tb_label">Paint tools</label><br/>
             <span id="tool">
                 <input type="radio" name="tool" id="paint" checked="checked"><label for="paint">Paint</label>
                 <input type="radio" name="tool" id="erase"><label for="erase">Erase</label>
@@ -27,7 +39,7 @@
         </div>
 
         <div id="penSize">
-            <label>Pen size</label><br/>
+            <label class="tb_label">Pen size</label><br/>
             <input type="radio" name="penSize" id="1" checked="checked"><label for="1">1</label>
             <input type="radio" name="penSize" id="2"><label for="2">2</label>
             <input type="radio" name="penSize" id="3"><label for="3">3</label>
@@ -37,6 +49,7 @@
         </div>
 
         <div id="slicetools">
+            <label class="tb_label">Slice selector</label><br/>
             <button id="prevSlice">-</button>
             <div id="slider" oninput="javascript:changeSlice()"></div>
             <button id="nextSlice">+</button>
