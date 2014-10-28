@@ -1,0 +1,11 @@
+/* 
+ * Settings for atlasMaker
+ *
+ */
+ 
+var settings = {}
+
+settings.path = {};
+settings.path.webroot ="/var/www/";
+
+module.exports = settings;

@@ -5,6 +5,8 @@
 	Launch using > node atlasMakerServer.js
 */
 
+
+var settings = require("./settings");
 var WebSocketServer=require("ws").Server;
 var fs=require("fs");
 var zlib=require("zlib");
@@ -13,8 +15,8 @@ var	debug=0;
 var	Atlases=[];
 var	Users=[];
 var	usrsckts=[];
-//var	localhost="/var/www/html";
-var	localhost="/Library/WebServer/Documents/";
+
+var	localhost=settings.webroot_path;
 var	uidcounter=1;
 
 initSocketConnection();
