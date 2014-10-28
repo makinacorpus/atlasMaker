@@ -16,7 +16,7 @@ var	Atlases=[];
 var	Users=[];
 var	usrsckts=[];
 
-var	localhost=settings.webroot_path;
+var	localhost=settings.path.webroot;
 var	uidcounter=1;
 
 initSocketConnection();
