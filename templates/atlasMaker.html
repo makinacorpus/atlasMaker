@@ -1,6 +1,6 @@
 <div id="toolbar" class="ui-widget-content ui-corner-all">
 	
-    <!-- ---------- Controls ---------- -->
+    <!-- Controls -->
     <div id="controls">
         <span id="header"></span>
 
@@ -36,13 +36,15 @@
             <input type="radio" name="penSize" id="15"><label for="15">15</label>
         </div>
 
-        <button id="prevSlice">-</button><div id="slider" oninput="javascript:changeSlice()"></div><button id="nextSlice">+</button>
         
-        <span id="slice"></span></br>
+        <button id="prevSlice">-</button>
+        <div id="slider" oninput="javascript:changeSlice()"></div>
+        <button id="nextSlice">+</button>
+        <div id="slice"></div>
 
     </div>
 
-    <!-------- Chat ------ -->
+    <!-- Chat -->
     <label id="chat">Chat (not connected)</label>
     <div id="log"></div>
     <input id="msg" type="text" onkeypress="onkey(event)">
@@ -50,5 +52,5 @@
 </div>
 
 <div id="resizable">
-	<canvas id="canvas"></canvas>
+    <canvas id="canvas"></canvas>
 </div>

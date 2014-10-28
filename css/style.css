@@ -68,6 +68,10 @@ td {
     float: left;
     width: 65%;
 }
+#slice {
+    margin: 0 auto;
+    width: 30px;
+}
 
 #log {
     width: auto;
