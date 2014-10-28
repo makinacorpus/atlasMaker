@@ -42,6 +42,7 @@ td {
 #toolbar {
     position: absolute;
     background-color: #bbb;
+    overflow: hidden;
 }
 
 #actions {
@@ -55,22 +56,23 @@ td {
     margin: 10px 0 5px 0;
 }
 
-#prevSlice {
-    float: left;
-    width: 15%;
-}
+#prevSlice,
 #nextSlice {
     float: left;
-    width: 15%;
+    width: 30px;
 }
 
 #slider {
     float: left;
-    width: 65%;
+    width: 70%;
 }
 #slice {
     margin: 0 auto;
     width: 30px;
+}
+
+#slicetools {
+    width: 100%;
 }
 
 #log {
