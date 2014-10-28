@@ -17,6 +17,8 @@ img {
     width: 220px;
     padding: 2px;
     display: inline-block;
+    top: 5px;
+    left: 5px;
 }
 
 #toolbar #header {
