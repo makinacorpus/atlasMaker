@@ -1,10 +1,11 @@
 html,body {
-        margin:0;
-        padding:0;
-        font-family:sans-serif;
-        background-color:black;
-   font-size:12px !important;
+    margin:0;
+    padding:0;
+    font-family:sans-serif;
+    background-color:black;
+    font-size:12px !important;
 }
+
 img { 
     image-rendering: optimizeSpeed;             /*                     */
     image-rendering: -moz-crisp-edges;          /* Firefox             */
@@ -13,6 +14,7 @@ img {
     image-rendering: optimize-contrast;         /* CSS3 Proposed       */
     -ms-interpolation-mode: nearest-neighbor;   /* IE8+                */
 }
+
 #toolbar {
     width: 220px;
     padding: 2px;
@@ -23,6 +25,15 @@ img {
 
 #toolbar #header {
     cursor: default;
+    background: #bff3a4;
+    -moz-box-shadow: 1px 1px 2px 0px #656565;
+    -webkit-box-shadow: 1px 1px 2px 0px #656565;
+    -o-box-shadow: 1px 1px 2px 0px #656565;
+    box-shadow: 1px 1px 2px 0px #656565;
+    filter:progid:DXImageTransform.Microsoft.Shadow(color=#656565, Direction=134, Strength=2);
+    -moz-border-radius: 3px;
+    -webkit-border-radius: 3px;
+    border-radius: 3px;
 }
 
 .ui-button-text {

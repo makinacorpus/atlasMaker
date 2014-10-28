@@ -141,7 +141,7 @@ function resizeWindow()
 function loadNifti()
 {
 	var oReq = new XMLHttpRequest();
-	var	progress=$(".atlasMaker span#header");
+	var	progress=$(".atlasMaker #header");
 	oReq.open("GET", User.dirname+"/"+User.mri.brain, true);
 	oReq.addEventListener("progress", function(e){progress.html("Loading "+User.name+" ("+parseInt(100*e.loaded/e.total)+"%)")}, false);
 	oReq.responseType = "arraybuffer";
