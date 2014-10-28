@@ -110,6 +110,7 @@ function initSocketConnection() {
 				}
 			});
 		});
+                console.log("Server running on ",host);
 	}
 	catch (ex)
 	{
