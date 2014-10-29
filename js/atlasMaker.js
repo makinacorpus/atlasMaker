@@ -5,49 +5,53 @@ init();
 //========================================================================================
 var debug=0;
 
-
 var brain_offcn=document.createElement('canvas');
 var brain_offtx=brain_offcn.getContext('2d');
 var canvas;
 var context;
 var brain_px;
-var	brain_W,brain_H,brain_D;
-var	brain_Wdim,brain_Hdim;
-var	max=0;
-var	brain_dim=new Array(3);
+var brain_W,brain_H,brain_D;
+var brain_Wdim,brain_Hdim;
+var max=0;
+var brain_dim=new Array(3);
 var brain_pixdim=new Array(3);
-var	brain_datatype;
-var	brain=0;
-var	brain_min,brain_max;
+var brain_datatype;
+var brain=0;
+var brain_min,brain_max;
 
-var User={	       view:'sag',
-				   tool:'paint',
-				  slice:0,
-				penSize:1,
-			   penValue:1,
-				 doFill:false,
-			mouseIsDown:false,
-					 x0:-1,
-					 y0:-1,
-				    mri:new Object()
-		};
-var	Collab=[];
+var User={
+    view:'sag',
+    tool:'paint',
+    slice:0,
+    penSize:1,
+    penValue:1,
+    doFill:false,
+    mouseIsDown:false,
+    x0:-1,
+    y0:-1,
+    mri:new Object()
+};
+var Collab=[];
 
-var	atlas=new Array();
+var atlas=new Array();
 var atlas_offcn=document.createElement('canvas');
 var atlas_offtx=atlas_offcn.getContext('2d');
 var atlas_px;
 
-var	name=AtlasMaker[0].name;
-var	url=AtlasMaker[0].url;
+var name=AtlasMaker[0].name;
+var url=AtlasMaker[0].url;
 //var url="http://braincatalogue.org/data/Sloth_bear/MRI-n4.nii.gz"; // not allowed: cross-origin
 //var url="http://localhost/atlasMaker/data/human/MRI.nii.gz"; // ok
 
 var socket;
 var flagConnected=0;
-var	msg,msg0="";
+var msg,msg0="";
 
-var	prevData=0;
+var prevData=0;
+
+var msgBuffer = [];
+var maxUndo = 20;
+var undoProcessing = false;
 
 //========================================================================================
 // Local user interaction
@@ -306,6 +310,7 @@ function drawImages()
 	}
 	else
 	{
+                // Default static image, if no brain data is available
 		var img = new Image();
   		img.src = User.dirname+"/"+User.view+".jpg";
   		img.onload = function(){
@@ -482,6 +487,28 @@ function keyDown(e)
 		nextSlice(this);
 		e.preventDefault();
 	}
+        if(e.which==90 && e.ctrlKey) {       // ctrl+z (undo)
+                undo();
+        }
+}
+
+function undo() {
+    for(ib = msgBuffer.length - 1 ; ib > (msgBuffer.length - maxUndo) && ib > 0 ; ib--) {
+        undoProcessing = true;
+        buff = JSON.parse(msgBuffer[ib]);
+        if(buff.c == "lf") {
+            buff.c = "le";
+        } else {
+            if(buff.c == "le") {
+                buff.c = "lf";
+            }
+        }
+        //sendPaintMessage(buff);
+        paintxy(buff.u,buff.c,buff.x,buff.y,User);
+        console.log("Undo: u = " + buff.u + ", c = " + buff.c + ", x = " + buff.x + ", y = " + buff.y);
+    }
+    undoProcessing = false;
+    
 }
 
 //========================================================================================
@@ -493,8 +520,11 @@ function paintxy(u,c,x,y,user)
 	// c: command
 	// x, y: coordinates
 	msg=JSON.stringify({"c":c,"x":x,"y":y});
+        msgBuff=JSON.stringify({"c":c,"x":x,"y":y,"u":u});
 	if(u==-1 && msg!=msg0)
 	{
+                if(!undoProcessing)
+                    msgBuffer.push(msgBuff); // Memorize actions
 		sendPaintMessage(msg);
 		msg0=msg;
 	}
