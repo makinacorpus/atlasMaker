@@ -381,10 +381,9 @@ function drawPaintCursor(x, y, ratio_x, ratio_y) {
     // Draw the paint cursor
     ps_x = User.penSize * ratio_x;
     ps_y = User.penSize * ratio_y;
-    //px = x - ps_x / 2;
-    //py = y - ps_y / 2;
-    px = x;
-    py = y;
+    delta_border = 2;
+    px = x - delta_border;
+    py = y - delta_border;
 
     $("#drawingcursor").remove();
     $("#resizable").append("<div id='drawingcursor' class='drawingcursor' style='left:"+px+"px; top: "+py+"px; width:"+ps_x+"px; height: "+ps_y+"px;'></div>");
