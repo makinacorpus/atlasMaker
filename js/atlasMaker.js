@@ -34,6 +34,7 @@ var User={
 var Collab=[];
 
 var atlas=new Array();
+
 var atlas_offcn=document.createElement('canvas');
 var atlas_offtx=atlas_offcn.getContext('2d');
 var atlas_px;
@@ -49,15 +50,22 @@ var msg,msg0="";
 
 var prevData=0;
 
-var msgBuffer = [];
-var maxUndo = 20;
-var undoProcessing = false;
+// Test buffer sbe
+var buffer_1_atlas_cn = document.getElementById('buffer_1_atlas');
+var buffer_1_atlas_tx = buffer_1_atlas_cn.getContext('2d');
+var buffer_2_atlas_cn = document.getElementById('buffer_2_atlas');
+var buffer_2_atlas_tx = buffer_2_atlas_cn.getContext('2d');
+
+var counter_undo = 0;
 
 //========================================================================================
 // Local user interaction
 //========================================================================================
 function changeView(theView)
 {
+        // Reset the undo buffer
+        counter_undo = 0;
+        
 	switch(theView)
 	{
 		case 'sagittal':
@@ -257,6 +265,13 @@ function configureBrainImage()
 	brain_offcn.height=brain_H;
 	brain_px=brain_offtx.getImageData(0,0,brain_offcn.width,brain_offcn.height);
 
+        // TODO: change that when multiple undo buffers
+        document.getElementById("buffer_1_atlas").width = brain_W;
+        document.getElementById("buffer_1_atlas").height = brain_H;
+        document.getElementById("buffer_2_atlas").width = brain_W;
+        document.getElementById("buffer_2_atlas").height = brain_H;
+
+        
 	resizeWindow();
 		
 //	var W=parseFloat($('#resizable').css('width'));
@@ -275,6 +290,25 @@ function configureAtlasImage()
 	atlas_offcn.height=brain_H;
 	atlas_px=atlas_offtx.getImageData(0,0,atlas_offcn.width,atlas_offcn.height);
 }
+function getCanvasWidth(view) {
+        switch(view)
+        {       
+            case 'sag': w = brain_dim[1]/*PA*/; break; // sagital
+            case 'cor': w = brain_dim[0]/*LR*/; break; // coronal
+            case 'axi': w = brain_dim[0]/*LR*/; break; // axial
+        }
+        return w;
+}
+function getCanvasHeight(view) {
+        switch(view)
+        {       
+            case 'sag': h = brain_dim[2]/*IS*/; break; // sagital
+            case 'cor': h = brain_dim[2]/*IS*/; break; // coronal
+            case 'axi': h = brain_dim[1]/*PA*/; break; // axial
+        }
+        return h;
+}
+
 function addAtlasLayer(dim)
 {
 	if(debug)
@@ -347,7 +381,7 @@ function drawBrainImage()
 		brain_px.data[ i+3 ]=255;
 	}
 	brain_offtx.putImageData(brain_px, 0, 0);
-
+        
 	nearestNeighbour(context);
 	context.drawImage(brain_offcn,0,0,brain_W,brain_H);
 }
@@ -361,7 +395,7 @@ function drawAtlasImage()
 	var	dim=layer.dim;
 	var	val;
 
-	ys=yc=ya=User.slice;
+ 	ys=yc=ya=User.slice;
 	for(y=0;y<brain_H;y++)
 	for(x=0;x<brain_W;x++)
 	{
@@ -377,11 +411,26 @@ function drawAtlasImage()
 		atlas_px.data[ i+2 ]=0;
 		atlas_px.data[ i+3 ]=255;
 	}
+	
 	atlas_offtx.putImageData(atlas_px, 0, 0);
-
+        
 	nearestNeighbour(context);
 	context.drawImage(atlas_offcn,0,0,brain_W,brain_H);
 }
+
+function fillUndoBuffer() {
+    
+    counter_undo = counter_undo + 1;
+    // Fill undo stack
+    // Put image from buffer 1 to buffer 2
+    var buffer_1_img = buffer_1_atlas_tx.getImageData(0, 0, brain_W, brain_H);
+    buffer_2_atlas_tx.putImageData(buffer_1_img, 0, 0);
+    
+    // And put last atlas imagein buffer 1
+    buffer_1_atlas_tx.putImageData(atlas_px, 0, 0);
+
+}
+
 function drawPaintCursor(x, y, ratio_x, ratio_y) {
     // Draw the paint cursor
     ps_x = User.penSize * ratio_x;
@@ -441,6 +490,8 @@ function down(x,y) {
 	var canvas = document.getElementById('atlasMaker-canvas');
 	var z=User.slice;
 
+        fillUndoBuffer();
+        
 	if(User.doFill)
 	{
 		if(User.penValue==0)
@@ -493,38 +544,100 @@ function keyDown(e)
 }
 
 function undo() {
-    for(ib = msgBuffer.length - 1 ; ib > (msgBuffer.length - maxUndo) && ib > 0 ; ib--) {
-        undoProcessing = true;
-        buff = JSON.parse(msgBuffer[ib]);
-        if(buff.c == "lf") {
-            buff.c = "le";
-        } else {
-            if(buff.c == "le") {
-                buff.c = "lf";
+    
+    if(counter_undo > 0) {
+        
+        counter_undo = counter_undo - 1;
+        
+        // TODO: make the delta with the other user actions
+        
+        context.clearRect(0,0,context.canvas.width,canvas.height);
+        
+        // Put image from buffer 1 to atlas
+        var buffer_1_img = buffer_1_atlas_tx.getImageData(0, 0, brain_W, brain_H);
+        atlas_offtx.putImageData(buffer_1_img, 0, 0);
+        
+        // And put image from buffer 2 in buffer 1
+        var buffer_2_img = buffer_2_atlas_tx.getImageData(0, 0, brain_W, brain_H);
+        buffer_1_atlas_tx.putImageData(buffer_2_img, 0, 0);
+
+        // Clear buffer 2 
+        // TODO: later fill buffer 2 with buffer 3, etc...
+        
+        nearestNeighbour(context);
+        context.drawImage(atlas_offcn,0,0,brain_W,brain_H);
+        
+        //drawImages();
+        drawBrainImage();
+        
+        // Send this new image to the server
+	User.x0 = 0;
+	User.y0 = 0;
+
+        // Convert image to data
+        tab_data = [];
+        for(i = 0 ; i < buffer_1_img.data.length; i = i + 4) {
+            // data contains red, green, blue, alpha values, that's why we step 4
+            if(buffer_1_img.data[i] > 0) {
+                // then we have a colored pixel (red value)
+                pixel = 1;
+            } else {
+                pixel = 0;
             }
+            tab_data.push(pixel);
         }
-        //sendPaintMessage(buff);
-        paintxy(buff.u,buff.c,buff.x,buff.y,User);
-        console.log("Undo: u = " + buff.u + ", c = " + buff.c + ", x = " + buff.x + ", y = " + buff.y);
+        msg = JSON.stringify({"img": tab_data, "width": brain_W, "height": brain_H});
+        sendImgMessage(msg);        
+        
+    } else {
+        alert("Nothing to undo");
     }
-    undoProcessing = false;
     
 }
 
 //========================================================================================
 // Paint functions common to all users
 //========================================================================================
+function paintimg(u,img,user)
+{
+        // u: user number
+        // img: img data
+        msg=JSON.stringify({"img":img});
+        if(u==-1 && msg!=msg0)
+        {
+            //sendPaintMessage(msg);
+            msg0=msg;
+        }
+        
+        var     layer = atlas[0];
+        
+        // Should be normally called only from the server
+        // img contains the img data
+        // we must apply this image on the right slice / view ( user.slice, user.view) !!
+        idx_img = 0;
+        width = getCanvasWidth(user.view);
+        height = getCanvasHeight(user.view);
+        for(y = 0 ; y < height; y++) {
+            for(x = 0 ; x < width; x++) {
+                i = slice2index(x, y, user.slice, user.view);
+                layer.data[i] = img[idx_img];
+                idx_img++;
+            }
+        }
+        
+        drawImages();
+        
+}
 function paintxy(u,c,x,y,user)
 {
 	// u: user number
 	// c: command
 	// x, y: coordinates
+    
 	msg=JSON.stringify({"c":c,"x":x,"y":y});
-        msgBuff=JSON.stringify({"c":c,"x":x,"y":y,"u":u});
+        //msgBuff=JSON.stringify({"c":c,"x":x,"y":y,"u":u});
 	if(u==-1 && msg!=msg0)
 	{
-                if(!undoProcessing)
-                    msgBuffer.push(msgBuff); // Memorize actions
 		sendPaintMessage(msg);
 		msg0=msg;
 	}
@@ -532,11 +645,14 @@ function paintxy(u,c,x,y,user)
 	var	layer=atlas[0];
 	var	dim=layer.dim;
 	
-	var	coord=xyz2slice(x,y,user.slice,user.view);
+	//var	coord=xyz2slice(x,y,user.slice,user.view);
+        var    coord={"x":x,"y":y,"z":user.slice};
+        
 	if(user.x0<0) {
 		user.x0=coord.x;
 		user.y0=coord.y;
 	}
+	
 	
 	switch(c)
 	{
@@ -644,8 +760,8 @@ function slice2index(mx,my,mz,myView)
 }
 function slice2xyz(mx,my,mz,myView)
 {
-	var	layer=atlas[0];
-	var	dim=layer.dim;
+	var	layer=atlas[0]; // what for ?
+	var	dim=layer.dim; // what for ?
 	var	x,y,z;
 	switch(myView)
 	{	case 'sag':	x=mz; y=mx; z=my;break; // sagital
@@ -656,6 +772,7 @@ function slice2xyz(mx,my,mz,myView)
 }
 function xyz2slice(x,y,z,myView)
 {
+        // TODO: what is the purpose of this function ? it returns the parameters !
 	var	mx,my,mz;
 	switch(myView)
 	{	case 'sag':	mz=x; mx=y; my=z;break; // sagital
@@ -683,6 +800,8 @@ function initSocketConnection() {
 	
 	try {
 		socket = createSocket(host);
+                //socket.binaryType = "arraybuffer";
+                socket.binaryType = "blob";
 		socket.onopen = function(msg) {
 			$("#chat").text("Chat (1 connected)");
 			flagConnected=1;
@@ -727,6 +846,9 @@ function initSocketConnection() {
 				case "paint":
 					receivePaintMessage(data);
 					break;
+                                case "img":
+                                        receiveImgMessage(data);
+                                        break;
 				case "disconnect":
 					receiveDisconnectMessage(data);
 					break;
@@ -814,6 +936,16 @@ function receivePaintMessage(data) {
 
 	paintxy(u,c,x,y,Collab[u]);
 }
+function receiveImgMessage(data) {
+        if(debug)
+                console.log("[receiveImgMessage]");
+
+        var msg=$.parseJSON(data.data);
+        var u=parseInt(data.uid);       // user
+        var img=msg.img;    // img data
+
+        paintimg(u,img,Collab[u]);
+}
 function receiveDisconnectMessage(data) {
 	if(debug)
 		console.log("[receiveDisconnectMessage]");
@@ -828,6 +960,20 @@ function receiveDisconnectMessage(data) {
 	$("#log").append(msg);
 	$("#log").scrollTop($("#log")[0].scrollHeight);
 }
+function sendImgMessage(msg) {
+        if(debug)
+                console.log("[sendImgMessage]");
+
+        if(flagConnected==0)
+                return;
+        try {
+                socket.send(JSON.stringify({"type":"img","data":msg}));
+                socket.send(msg);
+        } catch (ex) {
+                console.log("ERROR: Unable to sendImgMessage",ex);
+        }
+}
+
 function onkey(event) {
 	if (event.keyCode == 13) {
 		sendChatMessage();
@@ -889,6 +1035,8 @@ function initAtlasMaker()
 
 	$("input#fill").button().click(function(){toggleFill()});
 	
+        $("button#undo").button().click(function(){undo()});
+
 	$("div#penSize").buttonset().unbind('keydown');
 	$("#penSize input[type=radio]").change(function(){changePenSize($(this).attr('id'))});
 		

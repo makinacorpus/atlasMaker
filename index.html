@@ -4,6 +4,20 @@
 	<link rel="stylesheet" href="css/style.css">
 </head>
 <body ontouchmove="BlockMove(event);"> <!-- block move on tablets -->
+
+<div style="position: absolute; right: 5px; top: 5px;">
+    <div style="color:white; border: 1px solid #ccc; width: 300px; float: left; display: none;">
+<!--         <canvas style="position: absolute" id="buffer_1"></canvas> -->
+        <canvas style="position: absolute" id="buffer_1_atlas"></canvas>
+        <div style="position: absolute;">1</div>
+    </div>
+    <div style="color:white; border: 1px solid #ccc; width: 300px; float: left;  display: none;">
+<!--         <canvas style="position: absolute" id="buffer_2"></canvas> -->
+        <canvas style="position: absolute" id="buffer_2_atlas"></canvas>
+        <div style="position: absolute">2</div>
+    </div>
+</div>
+
 <script>function BlockMove(e){e.preventDefault()}</script>
 
 <script src="http://localhost/atlasMaker/js/load-atlasMaker.js?id=1&url=http://localhost/atlasMaker/data/Black_rhinoceros/info.txt" async></script>

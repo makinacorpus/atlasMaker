@@ -87,6 +87,9 @@ function initSocketConnection() {
 					case "paint":
 						receivePaintMessage(this,data);
 						break;
+                                        case "img":
+                                                receiveImageMessage(this,data);
+                                                break;
 				}
 			});
 			
@@ -161,6 +164,23 @@ function receiveUserDataMessage(ws,data)
 	// Update user data
 	Users[u]=user;
 }
+
+function receiveImageMessage(ws,data) {
+        if(debug)
+            console.log("[receiveImageMessage]");
+
+        var msg = JSON.parse(data.data);
+        var u = parseInt(data.uid);       // user
+        var img = msg.img;          // image
+        var width = msg.width;          // image width
+        var height = msg.height;          // image height
+        
+        var vol=Atlases[0].data;
+        
+        paintimg(u, img, Users[u], vol, width, height);                
+}
+
+
 function sendAtlasToUser(atlasdata,ws)
 {
 	if(debug)
@@ -184,7 +204,9 @@ function addAtlas(dirname,atlasname,callback)
 	loadNifti(atlas,callback);	
 	Atlases.push(atlas);
 	
-	setInterval(function(){saveNifti(atlas)},10*60*1000);
+	setInterval(function(){
+            saveNifti(atlas);
+        },10*60*1000);
 }
 function loadNifti(atlas,callback)
 {
@@ -244,6 +266,7 @@ function saveNifti(atlas)
 				fs.writeFile(n1,niigz);
 			});
 		});
+                console.log("Nifti saved")
 	}
 	else
 		console.log("nope");
@@ -278,6 +301,33 @@ function paintxy(u,c,x,y,user,vol)
 	user.x0=coord.x;
 	user.y0=coord.y;
 }
+function paintimg(u, img, user, vol, width, height)
+{
+    // sagital: 265 slices
+    // coronal: 328 slices
+    // axial:   143 slices
+    // on sagital, returns the slice number
+    // on coronal, returns for the slice: 0 ........ 0
+    //                     1 ............... 265
+    //                     2 ............... 265*2
+    //                     3 ............... 265*3
+    // on axial , returns  0 ............... 0
+    //                     1 ............... 86920
+    //                     2 ............... 86920*2
+    //                     3 ............... 86920*3
+    //
+    
+    idx_img = 0;
+    for(y = 0 ; y < height; y++) {
+        for(x = 0 ; x < width; x++) {
+            i = slice2index(x,y,user.slice,user.view);
+            vol[i] = img[idx_img];
+            idx_img++;
+        }
+    }
+}
+
+
 function fill(x,y,z,val,view,vol,dim)
 {
 	var	Q=[],n;
@@ -366,8 +416,8 @@ function slice2index(mx,my,mz,myView)
 		case 'cor':	x=mx; y=mz; z=my;break; // coronal
 		case 'axi':	x=mx; y=my; z=mz;break; // axial
 	}	
-	if(z>=0&&z<dim[2]&&y>=0&&y<dim[1]&&x>=0&&x<dim[0])
-		i=z*dim[1]*dim[0]+y*dim[0]+x;
+	if(z >= 0 && z < dim[2] && y >= 0 && y < dim[1] && x >= 0 && x < dim[0])
+		i = z*dim[1]*dim[0] + y*dim[0] + x;
 	return i;
 }
 function xyz2slice(x,y,z,myView)
