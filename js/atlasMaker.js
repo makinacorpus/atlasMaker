@@ -549,12 +549,74 @@ function undo() {
         
         counter_undo = counter_undo - 1;
         
-        // TODO: make the delta with the other user actions
+        // We save the current image, to see if other users have made changes
+        current_img_data = [];
+        for(i = 0 ; i < atlas_px.data.length; i = i + 4) {
+            // data contains red, green, blue, alpha values, that's why we step 4
+            if(atlas_px.data[i] > 0) {
+                // then we have a colored pixel (red value)
+                pixel = 1;
+            } else {
+                pixel = 0;
+            }
+            current_img_data.push(pixel);
+        }
         
+        // Erase current canvas
         context.clearRect(0,0,context.canvas.width,canvas.height);
         
-        // Put image from buffer 1 to atlas
+        // Get buffer 1 image
         var buffer_1_img = buffer_1_atlas_tx.getImageData(0, 0, brain_W, brain_H);
+        
+        // Convert buffer 1 image to data
+        tab_data = [];
+        for(i = 0 ; i < buffer_1_img.data.length; i = i + 4) {
+            // data contains red, green, blue, alpha values, that's why we step 4
+            if(buffer_1_img.data[i] > 0) {
+                // then we have a colored pixel (red value)
+                pixel = 1;
+            } else {
+                pixel = 0;
+            }
+            tab_data.push(pixel);
+        }
+        
+        // Make the delta with the other user actions
+        // TODO: check this procedure, check every case !
+        /*
+        for(i = 0 ; i < current_img_data.length; i++) {
+            if(current_img_data[i] == 1 && tab_data[i] == 1)
+                tab_data[i] = 1;
+            else
+                tab_data[i] = 0;
+        }
+        */
+        // reconvert tab_data to an image format in order to fill the canvas correctly
+        /*
+        i = 0;
+        for(y = 0 ; y < brain_H ; y++) {
+            for(x = 0 ; x < brain_W ; x++) {
+                val = 127*tab_data[i];
+                buffer_1_img.data[ i ]   = val;
+                buffer_1_img.data[ i+1 ] = 0;
+                buffer_1_img.data[ i+2 ] = 0;
+                buffer_1_img.data[ i+3 ] = 255;
+                i = i + 4;
+            }
+        }
+        */
+        
+        idx = 0;
+        var layer = atlas[0];
+        for(y = 0 ; y < brain_H ; y++) {
+            for(x = 0 ; x < brain_W ; x++) {
+                i = slice2index(x, y, User.slice, User.view);
+                layer.data[i] = tab_data[idx];
+                idx++;
+            }
+        }
+        
+        // Put image from buffer 1 to atlas
         atlas_offtx.putImageData(buffer_1_img, 0, 0);
         
         // And put image from buffer 2 in buffer 1
@@ -567,25 +629,14 @@ function undo() {
         nearestNeighbour(context);
         context.drawImage(atlas_offcn,0,0,brain_W,brain_H);
         
-        //drawImages();
-        drawBrainImage();
+        drawImages();
         
         // Send this new image to the server
 	User.x0 = 0;
 	User.y0 = 0;
 
-        // Convert image to data
-        tab_data = [];
-        for(i = 0 ; i < buffer_1_img.data.length; i = i + 4) {
-            // data contains red, green, blue, alpha values, that's why we step 4
-            if(buffer_1_img.data[i] > 0) {
-                // then we have a colored pixel (red value)
-                pixel = 1;
-            } else {
-                pixel = 0;
-            }
-            tab_data.push(pixel);
-        }
+        
+        
         msg = JSON.stringify({"img": tab_data, "width": brain_W, "height": brain_H});
         sendImgMessage(msg);        
         
