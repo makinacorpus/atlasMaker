@@ -599,18 +599,17 @@ function undo() {
             tab_data.push(pixel);
         }
         
-        // Make the delta with the other user actions
+        // Make the delta with the other user actions (intersection)
         // TODO: check this procedure, check every case !
-        /*
+        
         for(i = 0 ; i < current_img_data.length; i++) {
             if(current_img_data[i] == 1 && tab_data[i] == 1)
                 tab_data[i] = 1;
             else
                 tab_data[i] = 0;
         }
-        */
+        
         // reconvert tab_data to an image format in order to fill the canvas correctly
-        /*
         i = 0;
         for(y = 0 ; y < brain_H ; y++) {
             for(x = 0 ; x < brain_W ; x++) {
@@ -622,7 +621,7 @@ function undo() {
                 i = i + 4;
             }
         }
-        */
+
         
         idx = 0;
         var layer = atlas[0];
