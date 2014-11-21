@@ -58,6 +58,9 @@ var buffer_2_atlas_tx = buffer_2_atlas_cn.getContext('2d');
 
 var counter_undo = 0;
 
+$('#undo').attr("disabled", true);
+
+
 //========================================================================================
 // Local user interaction
 //========================================================================================
@@ -65,6 +68,9 @@ function changeView(theView)
 {
         // Reset the undo buffer
         counter_undo = 0;
+        $("#num_undo").text("");
+        $('#undo').attr("disabled", true);
+        $('#undo').addClass("undo_disabled");
         
 	switch(theView)
 	{
@@ -428,7 +434,10 @@ function fillUndoBuffer() {
     
     // And put last atlas imagein buffer 1
     buffer_1_atlas_tx.putImageData(atlas_px, 0, 0);
-
+    
+    $("#num_undo").text(counter_undo);
+    $('#undo').attr("disabled", false);
+    $('#undo').removeClass("undo_disabled");
 }
 
 function drawPaintCursor(x, y, ratio_x, ratio_y) {
@@ -549,6 +558,15 @@ function undo() {
         
         counter_undo = counter_undo - 1;
         
+        if(counter_undo == 0) {
+            $('#undo').attr("disabled", true);
+            $('#undo').addClass("undo_disabled");
+            $("#num_undo").text("");
+        }
+        else {
+            $("#num_undo").text(counter_undo);
+        }
+        
         // We save the current image, to see if other users have made changes
         current_img_data = [];
         for(i = 0 ; i < atlas_px.data.length; i = i + 4) {
@@ -634,8 +652,6 @@ function undo() {
         // Send this new image to the server
 	User.x0 = 0;
 	User.y0 = 0;
-
-        
         
         msg = JSON.stringify({"img": tab_data, "width": brain_W, "height": brain_H});
         sendImgMessage(msg);        
@@ -643,7 +659,6 @@ function undo() {
     } else {
         alert("Nothing to undo");
     }
-    
 }
 
 //========================================================================================

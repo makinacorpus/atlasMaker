@@ -36,7 +36,10 @@
                 <input type="radio" name="tool" id="erase"><label for="erase" class="erase"></label>
             </span>
             <input type="checkbox" id="fill"><label for="fill" class="fill"></label>
-            <button id="undo" class="undo"></button>
+            <div id="undocontainer">
+                <button id="undo" class="undo undo_disabled"></button>
+                <span id="num_undo"></span>
+            </div>
         </div>
 
         <div id="penSize">
