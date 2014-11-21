@@ -93,6 +93,30 @@ td {
     width: 100%;
 }
 
+label.paint,
+label.erase,
+label.fill,
+button.undo {
+    width: 50px;
+    height: 25px;
+}
+
+label.paint {
+    background: #fff url(../img/icon_draw.png) no-repeat center center !important;
+}
+
+label.erase {
+    background: #fff url(../img/icon_erase.png) no-repeat center center !important;
+}
+
+label.fill {
+    background: #fff url(../img/icon_fill.png) no-repeat center center !important;
+}
+button.undo {
+    background: #fff url(../img/icon_undo.png) no-repeat center center !important;
+}
+
+
 #log {
     width: auto;
     margin: 0 0;
