@@ -56,6 +56,9 @@ var buffer_1_atlas_tx = buffer_1_atlas_cn.getContext('2d');
 var buffer_2_atlas_cn = document.getElementById('buffer_2_atlas');
 var buffer_2_atlas_tx = buffer_2_atlas_cn.getContext('2d');
 
+var buffer_current_cn = document.getElementById('buffer_current');
+var buffer_current_tx = buffer_current_cn.getContext('2d');
+
 var counter_undo = 0;
 
 $('#undo').attr("disabled", true);
@@ -276,6 +279,8 @@ function configureBrainImage()
         document.getElementById("buffer_1_atlas").height = brain_H;
         document.getElementById("buffer_2_atlas").width = brain_W;
         document.getElementById("buffer_2_atlas").height = brain_H;
+        document.getElementById("buffer_current").width = brain_W;
+        document.getElementById("buffer_current").height = brain_H;
 
         
 	resizeWindow();
@@ -426,7 +431,9 @@ function drawAtlasImage()
 
 function fillUndoBuffer() {
     
-    counter_undo = counter_undo + 1;
+    if(counter_undo < 2)
+        counter_undo = counter_undo + 1;
+    
     // Fill undo stack
     // Put image from buffer 1 to buffer 2
     var buffer_1_img = buffer_1_atlas_tx.getImageData(0, 0, brain_W, brain_H);
@@ -438,6 +445,10 @@ function fillUndoBuffer() {
     $("#num_undo").text(counter_undo);
     $('#undo').attr("disabled", false);
     $('#undo').removeClass("undo_disabled");
+}
+
+function saveCurrentImage() {
+    buffer_current_tx.putImageData(atlas_px, 0, 0);
 }
 
 function drawPaintCursor(x, y, ratio_x, ratio_y) {
@@ -533,6 +544,7 @@ function move(x,y) {
 		paintxy(-1,'le',x,y,User);
 }
 function up(e) {
+        saveCurrentImage();
 	User.mouseIsDown = false;
 	User.x0=-1;
 	sendUserDataMessage();
@@ -569,7 +581,8 @@ function undo() {
         
         // We save the current image, to see if other users have made changes
         current_img_data = [];
-        for(i = 0 ; i < atlas_px.data.length; i = i + 4) {
+        img_tab_length = atlas_px.data.length;
+        for(i = 0 ; i < img_tab_length; i = i + 4) {
             // data contains red, green, blue, alpha values, that's why we step 4
             if(atlas_px.data[i] > 0) {
                 // then we have a colored pixel (red value)
@@ -585,9 +598,8 @@ function undo() {
         
         // Get buffer 1 image
         var buffer_1_img = buffer_1_atlas_tx.getImageData(0, 0, brain_W, brain_H);
-        
         // Convert buffer 1 image to data
-        tab_data = [];
+        tab_data_1 = [];
         for(i = 0 ; i < buffer_1_img.data.length; i = i + 4) {
             // data contains red, green, blue, alpha values, that's why we step 4
             if(buffer_1_img.data[i] > 0) {
@@ -596,50 +608,105 @@ function undo() {
             } else {
                 pixel = 0;
             }
-            tab_data.push(pixel);
+            tab_data_1.push(pixel);
         }
+
+        
+        // Get current buffer image
+        var buffer_current_img = buffer_current_tx.getImageData(0, 0, brain_W, brain_H);
+        // Convert buffer current image to data
+        tab_data_buf_cur = [];
+        for(i = 0 ; i < buffer_current_img.data.length; i = i + 4) {
+            // data contains red, green, blue, alpha values, that's why we step 4
+            if(buffer_current_img.data[i] > 0) {
+                // then we have a colored pixel (red value)
+                pixel = 1;
+            } else {
+                pixel = 0;
+            }
+            tab_data_buf_cur.push(pixel);
+        }
+        
+        // TODO compare buffer_current_img with current images to see if others have made modifications
+        // buffer_current_img contains the last local user modifications (without other's modifications)
+        for(i = 0 ; i < current_img_data.length; i++) {
+            if(current_img_data[i] == 1 && tab_data_buf_cur[i] == 1)
+                tab_data_buf_cur[i] = 0;
+            else {
+                if(current_img_data[i] == 0 && tab_data_buf_cur[i] == 0)
+                    tab_data_buf_cur[i] = 0;
+                else
+                    tab_data_buf_cur[i] = 1;
+            }
+        }
+
+        
         
         // Make the delta with the other user actions (intersection)
         // TODO: check this procedure, check every case !
-        
+        // tab_data_1 contains the undo buffer 1
+        /*
         for(i = 0 ; i < current_img_data.length; i++) {
-            if(current_img_data[i] == 1 && tab_data[i] == 1)
-                tab_data[i] = 1;
+            if(current_img_data[i] == 1 && tab_data_1[i] == 1)
+                tab_data_1[i] = 1;
             else
-                tab_data[i] = 0;
+                tab_data_1[i] = 0;
+        }
+        */
+        for(i = 0 ; i < current_img_data.length; i++) {
+            if(tab_data_buf_cur[i] == 1 && tab_data_1[i] == 1)
+                tab_data_1[i] = 1;
+            else {
+                if(tab_data_buf_cur[i] == 0 && tab_data_1[i] == 1)
+                    tab_data_1[i] = 1;
+                else {
+                    if(tab_data_buf_cur[i] == 1 && tab_data_1[i] == 0)
+                        tab_data_1[i] = 1;
+                    else
+                        tab_data_1[i] = 0;
+                }
+            }
         }
         
-        // reconvert tab_data to an image format in order to fill the canvas correctly
+        
+        // reconvert tab_data_1 to an image format in order to fill the canvas correctly
         i = 0;
+        idx = 0;
         for(y = 0 ; y < brain_H ; y++) {
             for(x = 0 ; x < brain_W ; x++) {
-                val = 127*tab_data[i];
+                val = 127*tab_data_1[idx];
                 buffer_1_img.data[ i ]   = val;
                 buffer_1_img.data[ i+1 ] = 0;
                 buffer_1_img.data[ i+2 ] = 0;
                 buffer_1_img.data[ i+3 ] = 255;
                 i = i + 4;
+                idx = idx + 1;
             }
         }
 
-        
         idx = 0;
         var layer = atlas[0];
         for(y = 0 ; y < brain_H ; y++) {
             for(x = 0 ; x < brain_W ; x++) {
                 i = slice2index(x, y, User.slice, User.view);
-                layer.data[i] = tab_data[idx];
+                layer.data[i] = tab_data_1[idx];
                 idx++;
             }
         }
         
+        
         // Put image from buffer 1 to atlas
         atlas_offtx.putImageData(buffer_1_img, 0, 0);
+
+        // And put image from buffer 1 in current_buffer also
+        buffer_current_tx.putImageData(buffer_1_img, 0, 0);
+        
         
         // And put image from buffer 2 in buffer 1
         var buffer_2_img = buffer_2_atlas_tx.getImageData(0, 0, brain_W, brain_H);
         buffer_1_atlas_tx.putImageData(buffer_2_img, 0, 0);
-
+        
+        
         // Clear buffer 2 
         // TODO: later fill buffer 2 with buffer 3, etc...
         
@@ -652,7 +719,7 @@ function undo() {
 	User.x0 = 0;
 	User.y0 = 0;
         
-        msg = JSON.stringify({"img": tab_data, "width": brain_W, "height": brain_H});
+        msg = JSON.stringify({"img": tab_data_1, "width": brain_W, "height": brain_H});
         sendImgMessage(msg);        
         
     } else {

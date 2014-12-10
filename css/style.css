@@ -172,3 +172,11 @@ button.undo_disabled {
 }
 
 
+.buffer_containers {
+    position: absolute;
+    color:white;
+    border: 1px solid #ccc;
+    width: 350px;
+    height: 200px;
+    right: 0px;
+}
